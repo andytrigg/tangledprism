@@ -7,7 +7,9 @@ defmodule Tangledprism.CLI do
   """
 
   def run(argv) do
-    parse_args(argv)
+    argv
+      |> parse_args
+      |> process
   end
 
   @doc """
@@ -21,8 +23,40 @@ defmodule Tangledprism.CLI do
     case parse do
     {[ help: true ], _, _ } 
       -> :help
+    {_, [ directory ], _ }
+      -> { directory }
     _ -> :help
     end
+  end
 
+  def process(:help) do
+    IO.puts """
+    usage: tangledprism <directory>    
+    """
+
+    System.halt(0)
+  end
+
+  def process({directory}) do
+    processDirectory([directory], "")
+  end
+ 
+  def processDirectory([], _) do end
+  def processDirectory([head], parent) do
+    file = Path.join(parent, head)
+    if File.dir?(file) do
+      IO.puts(["*** directory", file])
+      processDirectory(File.ls!(file), file)
+    else
+      processFile(file)
+    end
+  end
+  def processDirectory([head | tail], parent) do
+    processDirectory([head], parent)
+    processDirectory(tail, parent)
+  end
+
+  def processFile(file) do
+    IO.puts(["*** file ",file])
   end
 end
